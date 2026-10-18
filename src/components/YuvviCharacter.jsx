@@ -301,13 +301,13 @@ export const YuvviCharacter = ({
       }
 
       // --- ANIMATION LOOP ---
-      let clock = new THREE.Clock();
+      const startTime = performance.now();
       let nextBlink = 2.0;
 
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
 
-        const elapsed = clock.getElapsedTime();
+        const elapsed = (performance.now() - startTime) * 0.001;
 
         // 1. Gentle Idle Floating (sine wave)
         const hoverY = Math.sin(elapsed * 1.8) * 0.12;
@@ -387,9 +387,9 @@ export const YuvviCharacter = ({
       if (animationFrameId) cancelAnimationFrame(animationFrameId);
       if (renderer) {
         renderer.dispose();
-        if (renderer.domElement && renderer.domElement.parentNode) {
-          renderer.domElement.parentNode.removeChild(renderer.domElement.parentNode);
-        }
+      }
+      if (container) {
+        container.innerHTML = '';
       }
     };
   }, [currentScale.width, currentScale.height, showLantern, flightPose]);
