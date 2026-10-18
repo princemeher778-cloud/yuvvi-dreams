@@ -1,0 +1,472 @@
+/* ==========================================================================
+   YUVVI 2.0 — THE LIVING DREAM WORLD
+   A Dream After Midnight — Cinematic Design System & Global Styles
+   ========================================================================== */
+
+:root {
+  /* Color Palette — A Dream After Midnight */
+  --color-midnight: #080811;
+  --color-indigo-deep: #0D0D1E;
+  --color-indigo: #15152D;
+  --color-indigo-surface: #1E1E3B;
+  --color-indigo-card: rgba(21, 21, 45, 0.78);
+  --color-indigo-border: rgba(182, 164, 255, 0.18);
+
+  --color-purple: #6D55A8;
+  --color-purple-light: #8E73CE;
+  --color-lavender: #B6A4FF;
+  --color-lavender-glow: rgba(182, 164, 255, 0.4);
+
+  --color-moon-blue: #A8D9FF;
+  --color-moon-glow: rgba(168, 217, 255, 0.35);
+
+  --color-gold: #FFD985;
+  --color-gold-bright: #FFF0B8;
+  --color-gold-glow: rgba(255, 217, 133, 0.5);
+
+  --color-rose: #D99BCB;
+  --color-rose-glow: rgba(217, 155, 203, 0.35);
+
+  --color-text-main: #F5F3FF;
+  --color-text-sub: #C8C2DE;
+  --color-text-muted: #958CAE;
+  --color-white: #FFFFFF;
+
+  /* Typography */
+  --font-serif: 'Fraunces', Georgia, serif;
+  --font-rounded: 'Fredoka', cursive, sans-serif;
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Atmospheric Shadows & Glows */
+  --shadow-sm: 0 4px 12px rgba(8, 8, 17, 0.4);
+  --shadow-md: 0 10px 30px rgba(8, 8, 17, 0.6);
+  --shadow-lg: 0 20px 60px rgba(8, 8, 17, 0.85);
+  --glow-gold: 0 0 25px var(--color-gold-glow);
+  --glow-lavender: 0 0 30px var(--color-lavender-glow);
+  --glow-moon: 0 0 25px var(--color-moon-glow);
+
+  /* Radius */
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-flight: 0.75s cubic-bezier(0.25, 1, 0.35, 1);
+}
+
+/* Base Reset & Atmospheric Canvas */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-midnight);
+  color: var(--color-text-main);
+  line-height: 1.65;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(ellipse 90% 60% at 50% -10%, rgba(109, 85, 168, 0.28) 0%, transparent 70%),
+    radial-gradient(circle 600px at 85% 40%, rgba(168, 217, 255, 0.08) 0%, transparent 60%),
+    radial-gradient(circle 500px at 15% 75%, rgba(217, 155, 203, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 40% at 50% 100%, rgba(21, 21, 45, 0.95) 0%, transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Subtle Dream Stardust Texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  z-index: 998;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Typography Hierarchy */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-serif);
+  color: var(--color-text-main);
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+h1 {
+  font-size: clamp(2.4rem, 5.5vw, 4.2rem);
+  letter-spacing: -0.02em;
+  text-shadow: 0 4px 30px rgba(182, 164, 255, 0.2);
+}
+
+h2 {
+  font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+  letter-spacing: -0.015em;
+  text-shadow: 0 3px 20px rgba(168, 217, 255, 0.15);
+}
+
+h3 {
+  font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+}
+
+p {
+  color: var(--color-text-sub);
+  font-size: 1.05rem;
+}
+
+/* Character & Whimsical Details */
+.font-rounded {
+  font-family: var(--font-rounded);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.text-gold {
+  color: var(--color-gold);
+}
+
+.text-lavender {
+  color: var(--color-lavender);
+}
+
+.text-moon {
+  color: var(--color-moon-blue);
+}
+
+.text-rose {
+  color: var(--color-rose);
+}
+
+/* Accessibility Focus */
+:focus-visible {
+  outline: 3px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.85rem 1.85rem;
+  border-radius: var(--radius-full);
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all var(--transition-smooth);
+  position: relative;
+  white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-purple) 0%, #523E84 100%);
+  color: var(--color-white);
+  border: 1px solid rgba(182, 164, 255, 0.35);
+  box-shadow: 0 8px 24px rgba(109, 85, 168, 0.4);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--color-purple-light) 0%, #6850A2 100%);
+  transform: translateY(-2px);
+  border-color: var(--color-lavender);
+  box-shadow: 0 12px 32px rgba(182, 164, 255, 0.45);
+}
+
+.btn-secondary {
+  background: rgba(30, 30, 59, 0.65);
+  color: var(--color-text-main);
+  border: 1.5px solid var(--color-indigo-border);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover {
+  background: rgba(45, 45, 85, 0.8);
+  border-color: var(--color-moon-blue);
+  color: var(--color-moon-blue);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(168, 217, 255, 0.25);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--color-gold) 0%, #D8A53B 100%);
+  color: var(--color-midnight);
+  font-weight: 700;
+  box-shadow: 0 8px 25px rgba(255, 217, 133, 0.4);
+}
+
+.btn-gold:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(255, 217, 133, 0.65);
+  filter: brightness(1.08);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-text-sub);
+}
+
+.btn-ghost:hover {
+  background: rgba(182, 164, 255, 0.1);
+  color: var(--color-lavender);
+}
+
+/* Dark Glassmorphic Story Card */
+.story-card {
+  background: var(--color-indigo-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid var(--color-indigo-border);
+  border-radius: var(--radius-md);
+  padding: 2.2rem;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.story-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(182, 164, 255, 0.4);
+  box-shadow: 0 16px 45px rgba(8, 8, 17, 0.8), 0 0 25px rgba(182, 164, 255, 0.12);
+}
+
+/* Subtle Card Glow Highlight */
+.story-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(182, 164, 255, 0.4), transparent);
+  pointer-events: none;
+}
+
+/* Badges & Pills */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-rounded);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 0.95rem;
+  border-radius: var(--radius-full);
+  background: rgba(30, 30, 59, 0.75);
+  color: var(--color-text-main);
+  border: 1px solid var(--color-indigo-border);
+  backdrop-filter: blur(6px);
+}
+
+.badge-berry,
+.badge-purple {
+  background: rgba(109, 85, 168, 0.25);
+  color: var(--color-lavender);
+  border-color: rgba(182, 164, 255, 0.3);
+}
+
+.badge-gold {
+  background: rgba(255, 217, 133, 0.16);
+  color: var(--color-gold);
+  border-color: rgba(255, 217, 133, 0.35);
+}
+
+.badge-moon {
+  background: rgba(168, 217, 255, 0.16);
+  color: var(--color-moon-blue);
+  border-color: rgba(168, 217, 255, 0.35);
+}
+
+/* Containers */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.container-narrow {
+  max-width: 860px;
+}
+
+/* Ambient Dream Atmosphere Keyframes */
+@keyframes yuvviFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(2deg);
+  }
+}
+
+@keyframes lanternHover {
+  0%, 100% {
+    transform: translateY(0px) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(2.5deg);
+  }
+}
+
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(255, 217, 133, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 35px rgba(255, 217, 133, 0.75);
+  }
+}
+
+@keyframes cloudDriftSlow {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(40px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+@keyframes riseIntoSky {
+  0% {
+    transform: translateY(45px) scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(-12px) scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes destinationStarPulse {
+  0% {
+    transform: scale(0.2) rotate(0deg);
+    opacity: 0;
+    filter: drop-shadow(0 0 0px var(--color-gold));
+  }
+  50% {
+    transform: scale(1.4) rotate(90deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 30px var(--color-gold));
+  }
+  100% {
+    transform: scale(1) rotate(180deg);
+    opacity: 1;
+    filter: drop-shadow(0 0 15px var(--color-gold));
+  }
+}
+
+.animate-float {
+  animation: yuvviFloat 4.8s ease-in-out infinite;
+}
+
+.animate-lantern {
+  animation: lanternHover 4s ease-in-out infinite;
+}
+
+.animate-twinkle {
+  animation: starTwinkle 2.8s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+.animate-drift {
+  animation: cloudDriftSlow 32s ease-in-out infinite;
+}
+
+/* Collectible Star */
+.collectible-star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 50%;
+  transition: transform var(--transition-smooth), filter var(--transition-fast);
+}
+
+.collectible-star-btn:hover {
+  transform: scale(1.35) rotate(15deg);
+  filter: drop-shadow(0 0 16px var(--color-gold));
+}
+
+.collectible-star-btn.is-collected {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .animate-float,
+  .animate-lantern,
+  .animate-twinkle,
+  .animate-pulse-glow,
+  .animate-drift {
+    animation: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .story-card {
+    padding: 1.5rem;
+  }
+  .btn {
+    padding: 0.75rem 1.4rem;
+    font-size: 0.95rem;
+  }
+}
