@@ -1,14 +1,16 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import * as THREE from 'three';
 import { sound } from '../utils/audio';
+import { useTheme } from '../context/ThemeContext';
 
 const YUVVI_QUOTES = [
-  "Ooh! Did you bring a dream from the quiet night? ✨",
-  "Hold tight to your wonder! It never fades in the dark.",
-  "Listen closely... the midnight wind is humming a lullaby.",
-  "Every star in this sky was once an unspoken wish.",
-  "My lantern glows warmest when a forgotten memory is near!",
-  "A tiny spark is all it takes to build a world."
+  "Ooh! Did you bring a gentle dream today? ✨",
+  "Hold tight to your wonder! It never fades in the quiet.",
+  "Listen closely... even small wishes make sweet music.",
+  "Every star in the sky was once a cozy daydream.",
+  "My lantern and little cloud keep all the sleepy wishes safe!",
+  "A little puff of courage is all it takes to float high.",
+  "You can gently spin me around if you want to look at my lantern! ✨"
 ];
 
 export const YuvviCharacter = ({
@@ -18,25 +20,38 @@ export const YuvviCharacter = ({
   showLantern = true,
   onLanternClick = null,
   customMessage = null,
-  flightPose = false, // when in active flight
-  lookTarget = null, // { x, y } target coordinates to look toward
+  flightPose = false,
+  lookTarget = null,
   className = ''
 }) => {
   const mountRef = useRef(null);
   const [speech, setSpeech] = useState(customMessage);
   const [currentExpression, setCurrentExpression] = useState(expression);
   const [webGlSupported, setWebGlSupported] = useState(true);
+  const { isDayMode } = useTheme?.() || { isDayMode: false };
+
+  // Pointer & Drag tracking for natural eye-following and 3D rotation
+  const pointerRef = useRef({
+    x: 0,
+    y: 0,
+    orbitX: 0,
+    orbitY: 0,
+    targetOrbitX: 0,
+    targetOrbitY: 0,
+    isDragging: false,
+    startX: 0,
+    startY: 0
+  });
 
   const scaleMap = {
-    small: { width: 140, height: 135 },
-    medium: { width: 220, height: 210 },
-    large: { width: 300, height: 280 },
-    hero: { width: 380, height: 350 }
+    small: { width: 145, height: 140 },
+    medium: { width: 230, height: 220 },
+    large: { width: 310, height: 295 },
+    hero: { width: 390, height: 365 }
   };
 
   const currentScale = scaleMap[size] || scaleMap.medium;
 
-  // Sync expression prop
   useEffect(() => {
     setCurrentExpression(expression);
   }, [expression]);
@@ -45,7 +60,6 @@ export const YuvviCharacter = ({
     if (customMessage) setSpeech(customMessage);
   }, [customMessage]);
 
-  // Three.js 3D Procedural Character Scene
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
@@ -61,7 +75,7 @@ export const YuvviCharacter = ({
         0.1,
         100
       );
-      camera.position.set(0, 0, 5.2);
+      camera.position.set(0, 0, 5.4);
 
       renderer = new THREE.WebGLRenderer({
         alpha: true,
@@ -71,84 +85,110 @@ export const YuvviCharacter = ({
       renderer.setSize(currentScale.width, currentScale.height);
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.1;
+      renderer.toneMappingExposure = 1.15;
 
       container.replaceChildren(renderer.domElement);
 
       // --- LIGHTING ---
-      // Ambient Midnight Fill
-      const ambientLight = new THREE.AmbientLight(0x281e48, 1.4);
+      const ambientLight = new THREE.AmbientLight(0xfff0fa, 1.6);
       scene.add(ambientLight);
 
-      // Cool Moonlight Directional Key from top-left
-      const moonLight = new THREE.DirectionalLight(0xa8d9ff, 2.4);
-      moonLight.position.set(-3, 4, 3);
-      scene.add(moonLight);
+      const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+      keyLight.position.set(-2.5, 4, 3.5);
+      scene.add(keyLight);
 
-      // Soft Purple Rim Light from rear-right
       const rimLight = new THREE.DirectionalLight(0xb6a4ff, 1.8);
-      rimLight.position.set(3, -2, -2);
+      rimLight.position.set(2.8, -1.8, -2);
       scene.add(rimLight);
 
-      // Lantern Warm Point Light (illuminates Yuvvi's right side)
-      const lanternLight = new THREE.PointLight(0xffd985, 3.2, 5);
-      lanternLight.position.set(1.4, 0.2, 0.8);
+      const lanternLight = new THREE.PointLight(0xffd985, 3.5, 5.5);
+      lanternLight.position.set(1.4, 0.3, 0.8);
       scene.add(lanternLight);
 
-      // --- CHARACTER HIERARCHY ROOT ---
-      const yuvviGroup = new THREE.Group();
-      scene.add(yuvviGroup);
+      // --- ROOT CHARACTER GROUP ---
+      const rootGroup = new THREE.Group();
+      scene.add(rootGroup);
 
-      // --- 1. GHOST BODY MESH ---
-      // Custom rounded sculpted geometry: soft pear shape with ruffled hem base
-      const bodyGeometry = new THREE.SphereGeometry(1.15, 36, 36);
-      const posAttr = bodyGeometry.attributes.position;
-      const originalY = new Float32Array(posAttr.count);
-
-      for (let i = 0; i < posAttr.count; i++) {
-        let x = posAttr.getX(i);
-        let y = posAttr.getY(i);
-        let z = posAttr.getZ(i);
-
-        // Pear shape tapering at the top, soft wideness at bottom
-        if (y < 0) {
-          x *= 1.12 + Math.sin(y * 3) * 0.08;
-          z *= 1.12 + Math.sin(y * 3) * 0.08;
-        } else {
-          x *= 0.95;
-          z *= 0.95;
-        }
-
-        // Slight flatten back, soft puffed front
-        if (z > 0) z *= 1.08;
-
-        posAttr.setXYZ(i, x, y, z);
-        originalY[i] = y;
-      }
-      bodyGeometry.computeVertexNormals();
-
-      // Translucent Subsurface Material
-      const bodyMaterial = new THREE.MeshPhysicalMaterial({
+      // Materials
+      const ghostMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xffffff,
-        roughness: 0.18,
+        roughness: 0.22,
         metalness: 0.02,
         clearcoat: 0.85,
         clearcoatRoughness: 0.12,
-        transmission: 0.2,
+        transmission: 0.18,
         ior: 1.35,
         sheen: 0.6,
         sheenColor: new THREE.Color(0xd99bcb)
       });
 
-      const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
-      bodyMesh.scale.set(1, 1.25, 0.95);
+      const cloudMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        roughness: 0.35,
+        clearcoat: 0.4,
+        sheen: 0.8,
+        sheenColor: new THREE.Color(0xb6a4ff)
+      });
+
+      // --- 1. SMALL FLOATING COMPANION CLOUD (Beneath Yuvvi) ---
+      const cloudGroup = new THREE.Group();
+      cloudGroup.position.set(0, -1.05, 0);
+
+      const puffGeo = new THREE.SphereGeometry(0.38, 20, 20);
+      const centerPuff = new THREE.Mesh(puffGeo, cloudMaterial);
+      centerPuff.scale.set(1.5, 0.85, 1.1);
+      cloudGroup.add(centerPuff);
+
+      const leftPuff = new THREE.Mesh(puffGeo, cloudMaterial);
+      leftPuff.position.set(-0.55, -0.05, 0.05);
+      leftPuff.scale.set(1.1, 0.75, 0.95);
+      cloudGroup.add(leftPuff);
+
+      const rightPuff = new THREE.Mesh(puffGeo, cloudMaterial);
+      rightPuff.position.set(0.55, -0.04, 0.05);
+      rightPuff.scale.set(1.15, 0.8, 0.95);
+      cloudGroup.add(rightPuff);
+
+      const frontPuff = new THREE.Mesh(puffGeo, cloudMaterial);
+      frontPuff.position.set(0.1, -0.12, 0.3);
+      frontPuff.scale.set(1.2, 0.65, 0.9);
+      cloudGroup.add(frontPuff);
+
+      rootGroup.add(cloudGroup);
+
+      // --- 2. YUVVI'S GHOST BODY (Standing on the Cloud) ---
+      const yuvviGroup = new THREE.Group();
+      yuvviGroup.position.set(0, 0.15, 0);
+
+      const bodyGeometry = new THREE.SphereGeometry(1.05, 36, 36);
+      const posAttr = bodyGeometry.attributes.position;
+      for (let i = 0; i < posAttr.count; i++) {
+        let x = posAttr.getX(i);
+        let y = posAttr.getY(i);
+        let z = posAttr.getZ(i);
+
+        if (y < 0) {
+          x *= 1.1;
+          z *= 1.1;
+        } else {
+          x *= 0.92;
+          z *= 0.92;
+        }
+        if (z > 0) z *= 1.08;
+
+        posAttr.setXYZ(i, x, y, z);
+      }
+      bodyGeometry.computeVertexNormals();
+
+      const bodyMesh = new THREE.Mesh(bodyGeometry, ghostMaterial);
+      bodyMesh.scale.set(0.95, 1.18, 0.9);
       yuvviGroup.add(bodyMesh);
 
-      // --- 2. FOREHEAD GOLDEN STAR ---
+      // Forehead Golden Star
       const starShape = new THREE.Shape();
       const points = 5;
-      const outerRadius = 0.14;
-      const innerRadius = 0.06;
+      const outerRadius = 0.13;
+      const innerRadius = 0.055;
       for (let i = 0; i < points * 2; i++) {
         const r = i % 2 === 0 ? outerRadius : innerRadius;
         const angle = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
@@ -167,137 +207,138 @@ export const YuvviCharacter = ({
         bevelSize: 0.015,
         bevelThickness: 0.015
       });
-
       const starMat = new THREE.MeshStandardMaterial({
         color: 0xffd985,
         emissive: 0xffd985,
-        emissiveIntensity: 0.8,
+        emissiveIntensity: 0.85,
         roughness: 0.2,
         metalness: 0.6
       });
-
       const starMesh = new THREE.Mesh(starGeo, starMat);
-      starMesh.position.set(0, 0.72, 0.94);
+      starMesh.position.set(0, 0.68, 0.9);
       yuvviGroup.add(starMesh);
 
-      // --- 3. EXPRESSIVE GLOSSY EYES ---
-      const eyeGeo = new THREE.SphereGeometry(0.11, 24, 24);
+      // Expressive Glossy Eyes
+      const eyeGeo = new THREE.SphereGeometry(0.1, 24, 24);
       const eyeMat = new THREE.MeshStandardMaterial({
         color: 0x111124,
         roughness: 0.04,
         metalness: 0.1
       });
 
-      // Left Eye
       const leftEye = new THREE.Mesh(eyeGeo, eyeMat);
-      leftEye.position.set(-0.32, 0.12, 0.98);
+      leftEye.position.set(-0.3, 0.1, 0.92);
       leftEye.scale.set(1, 1.3, 0.6);
       yuvviGroup.add(leftEye);
 
-      // Right Eye
       const rightEye = new THREE.Mesh(eyeGeo, eyeMat);
-      rightEye.position.set(0.32, 0.12, 0.98);
+      rightEye.position.set(0.3, 0.1, 0.92);
       rightEye.scale.set(1, 1.3, 0.6);
       yuvviGroup.add(rightEye);
 
-      // Catchlights (Eye highlights)
-      const catchlightGeo = new THREE.SphereGeometry(0.032, 12, 12);
+      // Catchlight highlights
+      const catchlightGeo = new THREE.SphereGeometry(0.03, 12, 12);
       const catchlightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-
       const leftCatch = new THREE.Mesh(catchlightGeo, catchlightMat);
-      leftCatch.position.set(-0.35, 0.16, 1.05);
+      leftCatch.position.set(-0.33, 0.14, 0.98);
       yuvviGroup.add(leftCatch);
 
       const rightCatch = new THREE.Mesh(catchlightGeo, catchlightMat);
-      rightCatch.position.set(0.29, 0.16, 1.05);
+      rightCatch.position.set(0.27, 0.14, 0.98);
       yuvviGroup.add(rightCatch);
 
-      // --- 4. ROSY CHEEKS ---
+      // Rosy Cheeks
       const cheekGeo = new THREE.SphereGeometry(0.12, 16, 16);
       const cheekMat = new THREE.MeshBasicMaterial({
         color: 0xd99bcb,
         transparent: true,
-        opacity: 0.55
+        opacity: 0.58
       });
 
       const leftCheek = new THREE.Mesh(cheekGeo, cheekMat);
-      leftCheek.position.set(-0.46, -0.06, 0.9);
+      leftCheek.position.set(-0.44, -0.07, 0.85);
       leftCheek.scale.set(1.4, 0.6, 0.4);
       yuvviGroup.add(leftCheek);
 
       const rightCheek = new THREE.Mesh(cheekGeo, cheekMat);
-      rightCheek.position.set(0.46, -0.06, 0.9);
+      rightCheek.position.set(0.44, -0.07, 0.85);
       rightCheek.scale.set(1.4, 0.6, 0.4);
       yuvviGroup.add(rightCheek);
 
-      // --- 5. TINY SWEET ARMS ---
-      const armGeo = new THREE.SphereGeometry(0.18, 16, 16);
-      const leftArm = new THREE.Mesh(armGeo, bodyMaterial);
-      leftArm.position.set(-0.95, -0.15, 0.2);
-      leftArm.scale.set(0.7, 1.4, 0.7);
-      leftArm.rotation.z = 0.4;
+      // Tiny Cloud Feet resting on the companion cloud
+      const footGeo = new THREE.SphereGeometry(0.14, 16, 16);
+      const leftFoot = new THREE.Mesh(footGeo, ghostMaterial);
+      leftFoot.position.set(-0.25, -0.92, 0.2);
+      leftFoot.scale.set(1.1, 0.8, 1.3);
+      yuvviGroup.add(leftFoot);
+
+      const rightFoot = new THREE.Mesh(footGeo, ghostMaterial);
+      rightFoot.position.set(0.25, -0.92, 0.2);
+      rightFoot.scale.set(1.1, 0.8, 1.3);
+      yuvviGroup.add(rightFoot);
+
+      // Arms
+      const armGeo = new THREE.SphereGeometry(0.17, 16, 16);
+      const leftArm = new THREE.Mesh(armGeo, ghostMaterial);
+      leftArm.position.set(-0.85, -0.15, 0.2);
+      leftArm.scale.set(0.7, 1.35, 0.7);
+      leftArm.rotation.z = 0.35;
       yuvviGroup.add(leftArm);
 
-      const rightArm = new THREE.Mesh(armGeo, bodyMaterial);
-      rightArm.position.set(0.95, -0.1, 0.3);
-      rightArm.scale.set(0.7, 1.4, 0.7);
-      rightArm.rotation.z = -0.6;
+      const rightArm = new THREE.Mesh(armGeo, ghostMaterial);
+      rightArm.position.set(0.85, -0.1, 0.3);
+      rightArm.scale.set(0.7, 1.35, 0.7);
+      rightArm.rotation.z = -0.55;
       yuvviGroup.add(rightArm);
 
-      // --- 6. 3D DREAM LANTERN ---
+      rootGroup.add(yuvviGroup);
+
+      // --- 3. FLOATING DREAM LANTERN ---
       let lanternGroup = null;
       let starFlame = null;
 
       if (showLantern) {
         lanternGroup = new THREE.Group();
-        lanternGroup.position.set(1.35, 0.1, 0.6);
+        lanternGroup.position.set(1.3, 0.15, 0.6);
 
-        // Brass Top Cap
-        const capGeo = new THREE.CylinderGeometry(0.16, 0.22, 0.1, 18);
+        const capGeo = new THREE.CylinderGeometry(0.15, 0.2, 0.09, 18);
         const brassMat = new THREE.MeshStandardMaterial({
           color: 0xd4a137,
           roughness: 0.25,
           metalness: 0.8
         });
         const capMesh = new THREE.Mesh(capGeo, brassMat);
-        capMesh.position.y = 0.32;
+        capMesh.position.y = 0.3;
         lanternGroup.add(capMesh);
 
-        // Brass Loop Ring
-        const ringGeo = new THREE.TorusGeometry(0.09, 0.025, 12, 24);
+        const ringGeo = new THREE.TorusGeometry(0.08, 0.024, 12, 24);
         const ringMesh = new THREE.Mesh(ringGeo, brassMat);
-        ringMesh.position.y = 0.42;
+        ringMesh.position.y = 0.4;
         ringMesh.rotation.x = Math.PI / 2;
         lanternGroup.add(ringMesh);
 
-        // Transparent Glass Chamber
-        const glassGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.45, 24, 1, true);
+        const glassGeo = new THREE.CylinderGeometry(0.17, 0.17, 0.42, 24, 1, true);
         const glassMat = new THREE.MeshPhysicalMaterial({
           color: 0xfff9e6,
           transmission: 0.92,
           opacity: 0.85,
           transparent: true,
-          roughness: 0.05,
-          ior: 1.45
+          roughness: 0.05
         });
         const glassMesh = new THREE.Mesh(glassGeo, glassMat);
         lanternGroup.add(glassMesh);
 
-        // Glowing Star Flame Inside
-        const flameGeo = new THREE.OctahedronGeometry(0.11, 1);
-        const flameMat = new THREE.MeshBasicMaterial({
-          color: 0xffd985
-        });
+        const flameGeo = new THREE.OctahedronGeometry(0.1, 1);
+        const flameMat = new THREE.MeshBasicMaterial({ color: 0xffd985 });
         starFlame = new THREE.Mesh(flameGeo, flameMat);
         lanternGroup.add(starFlame);
 
-        // Brass Base
-        const baseGeo = new THREE.CylinderGeometry(0.22, 0.18, 0.08, 18);
+        const baseGeo = new THREE.CylinderGeometry(0.2, 0.17, 0.08, 18);
         const baseMesh = new THREE.Mesh(baseGeo, brassMat);
-        baseMesh.position.y = -0.26;
+        baseMesh.position.y = -0.24;
         lanternGroup.add(baseMesh);
 
-        scene.add(lanternGroup);
+        rootGroup.add(lanternGroup);
       }
 
       // --- ANIMATION LOOP ---
@@ -306,35 +347,71 @@ export const YuvviCharacter = ({
 
       const animate = () => {
         animationFrameId = requestAnimationFrame(animate);
-
         const elapsed = (performance.now() - startTime) * 0.001;
 
-        // 1. Gentle Idle Floating (sine wave)
+        // Gentle Floating Animation (Yuvvi + Cloud together)
         const hoverY = Math.sin(elapsed * 1.8) * 0.12;
-        const hoverRoll = Math.sin(elapsed * 1.4) * 0.04;
-        yuvviGroup.position.y = hoverY;
-        yuvviGroup.rotation.z = hoverRoll;
+        const hoverRoll = Math.sin(elapsed * 1.4) * 0.035;
+        rootGroup.position.y = hoverY;
+        rootGroup.rotation.z = hoverRoll;
 
-        // 2. Flight Pose tilt
+        // Subtle cloud puff breathing
+        cloudGroup.scale.set(
+          1 + Math.sin(elapsed * 2) * 0.03,
+          1 + Math.cos(elapsed * 2) * 0.02,
+          1 + Math.sin(elapsed * 2) * 0.03
+        );
+
+        // Flight pose lean
         if (flightPose) {
-          yuvviGroup.rotation.x = THREE.MathUtils.lerp(yuvviGroup.rotation.x, 0.35, 0.1);
-          yuvviGroup.position.z = THREE.MathUtils.lerp(yuvviGroup.position.z, 0.3, 0.1);
+          rootGroup.rotation.x = THREE.MathUtils.lerp(rootGroup.rotation.x, 0.32, 0.1);
         } else {
-          yuvviGroup.rotation.x = THREE.MathUtils.lerp(yuvviGroup.rotation.x, 0, 0.08);
-          yuvviGroup.position.z = THREE.MathUtils.lerp(yuvviGroup.position.z, 0, 0.08);
+          rootGroup.rotation.x = THREE.MathUtils.lerp(rootGroup.rotation.x, 0, 0.08);
         }
 
-        // 3. Smooth Look-Target Rotation
+        // Reduced motion check
+        const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Subtle, curious head tilt oscillation
+        const headTilt = prefersReducedMotion ? 0 : Math.sin(elapsed * 1.1) * 0.045;
+
+        // Smooth look & 3D Orbit Drag combination
+        let targetRotY = pointerRef.current.orbitY + headTilt;
+        let targetRotX = pointerRef.current.orbitX;
+
         if (lookTarget) {
-          const targetRotY = (lookTarget.x / window.innerWidth - 0.5) * 0.6;
-          const targetRotX = -(lookTarget.y / window.innerHeight - 0.5) * 0.4;
-          yuvviGroup.rotation.y = THREE.MathUtils.lerp(yuvviGroup.rotation.y, targetRotY, 0.06);
-          yuvviGroup.rotation.x = THREE.MathUtils.lerp(yuvviGroup.rotation.x, targetRotX, 0.06);
+          targetRotY += (lookTarget.x / window.innerWidth - 0.5) * 0.55;
+          targetRotX += -(lookTarget.y / window.innerHeight - 0.5) * 0.35;
         } else {
-          yuvviGroup.rotation.y = THREE.MathUtils.lerp(yuvviGroup.rotation.y, 0, 0.05);
+          targetRotY += pointerRef.current.x * (prefersReducedMotion ? 0.05 : 0.42);
+          targetRotX += -pointerRef.current.y * (prefersReducedMotion ? 0.04 : 0.26);
         }
 
-        // 4. Occasional Blinking
+        yuvviGroup.rotation.y = THREE.MathUtils.lerp(yuvviGroup.rotation.y, targetRotY, 0.08);
+        yuvviGroup.rotation.x = THREE.MathUtils.lerp(yuvviGroup.rotation.x, targetRotX, 0.08);
+        yuvviGroup.rotation.z = headTilt * 0.5;
+
+        // Natural Eye Tracking: pupils & highlights follow pointer coordinates naturally
+        const eyeOffsetX = THREE.MathUtils.clamp(pointerRef.current.x * 0.04, -0.04, 0.04);
+        const eyeOffsetY = THREE.MathUtils.clamp(-pointerRef.current.y * 0.035, -0.035, 0.035);
+
+        leftEye.position.x = -0.3 + eyeOffsetX;
+        leftEye.position.y = 0.1 + eyeOffsetY;
+        rightEye.position.x = 0.3 + eyeOffsetX;
+        rightEye.position.y = 0.1 + eyeOffsetY;
+
+        leftCatch.position.x = -0.33 + eyeOffsetX * 0.8;
+        leftCatch.position.y = 0.14 + eyeOffsetY * 0.8;
+        rightCatch.position.x = 0.27 + eyeOffsetX * 0.8;
+        rightCatch.position.y = 0.14 + eyeOffsetY * 0.8;
+
+        // If user finished dragging, orbit gently springs back to center over time
+        if (!pointerRef.current.isDragging) {
+          pointerRef.current.orbitY = THREE.MathUtils.lerp(pointerRef.current.orbitY, 0, 0.025);
+          pointerRef.current.orbitX = THREE.MathUtils.lerp(pointerRef.current.orbitX, 0, 0.025);
+        }
+
+        // Blinking
         if (elapsed > nextBlink) {
           leftEye.scale.y = 0.1;
           rightEye.scale.y = 0.1;
@@ -350,49 +427,87 @@ export const YuvviCharacter = ({
           }
         }
 
-        // 5. Lantern Hover & Internal Star Pulse
+        // Lantern hover & starlight flame
         if (lanternGroup) {
-          lanternGroup.position.y = hoverY * 0.8 + Math.cos(elapsed * 2.2) * 0.06;
-          lanternGroup.rotation.z = Math.sin(elapsed * 1.5) * 0.08;
+          lanternGroup.position.y = 0.15 + hoverY * 0.5 + Math.cos(elapsed * 2.2) * 0.05;
+          lanternGroup.rotation.z = Math.sin(elapsed * 1.5) * 0.06;
 
           if (starFlame) {
-            const starPulse = 1 + Math.sin(elapsed * 5) * 0.15;
+            const starPulse = 1 + Math.sin(elapsed * 5) * 0.14;
             starFlame.scale.set(starPulse, starPulse, starPulse);
             starFlame.rotation.y = elapsed * 1.2;
-            starFlame.rotation.z = elapsed * 0.8;
           }
         }
 
-        // 6. Base hem subtle wave deformation
-        const pos = bodyGeometry.attributes.position;
-        for (let i = 0; i < pos.count; i++) {
-          const y = originalY[i];
-          if (y < -0.4) {
-            const wave = Math.sin(elapsed * 3 + pos.getX(i) * 4) * 0.04;
-            pos.setY(i, y + wave);
-          }
+        // Responsive Lighting for Day / Night mode
+        if (isDayMode) {
+          ambientLight.color.setHex(0xfffaea);
+          ambientLight.intensity = 1.85;
+          rimLight.color.setHex(0xffd985);
+          lanternLight.intensity = 2.2;
+        } else {
+          ambientLight.color.setHex(0xfff0fa);
+          ambientLight.intensity = 1.5;
+          rimLight.color.setHex(0xb6a4ff);
+          lanternLight.intensity = 3.6;
         }
-        bodyGeometry.attributes.position.needsUpdate = true;
 
         renderer.render(scene, camera);
       };
 
+      // Pointer tracking listener for natural eye following
+      const handleGlobalPointerMove = (e) => {
+        pointerRef.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+        pointerRef.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+      };
+
+      window.addEventListener('pointermove', handleGlobalPointerMove, { passive: true });
+
       animate();
+
+      return () => {
+        window.removeEventListener('pointermove', handleGlobalPointerMove);
+        if (animationFrameId) cancelAnimationFrame(animationFrameId);
+        if (renderer) renderer.dispose();
+        if (container) container.innerHTML = '';
+      };
     } catch {
-      // Fallback gracefully to CSS / SVG character if WebGL is unavailable
       setWebGlSupported(false);
     }
+  }, [currentScale.width, currentScale.height, showLantern, flightPose, isDayMode, lookTarget]);
 
-    return () => {
-      if (animationFrameId) cancelAnimationFrame(animationFrameId);
-      if (renderer) {
-        renderer.dispose();
-      }
-      if (container) {
-        container.innerHTML = '';
-      }
-    };
-  }, [currentScale.width, currentScale.height, showLantern, flightPose]);
+  // Pointer drag to orbit 3D Yuvvi
+  const handlePointerDown = (e) => {
+    pointerRef.current.isDragging = true;
+    pointerRef.current.startX = e.clientX;
+    pointerRef.current.startY = e.clientY;
+    pointerRef.current.moved = false;
+  };
+
+  const handlePointerMove = (e) => {
+    if (!pointerRef.current.isDragging) return;
+    const dx = e.clientX - pointerRef.current.startX;
+    const dy = e.clientY - pointerRef.current.startY;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+      pointerRef.current.moved = true;
+    }
+    pointerRef.current.orbitY += dx * 0.008;
+    pointerRef.current.orbitX = THREE.MathUtils.clamp(
+      pointerRef.current.orbitX + dy * 0.006,
+      -0.65,
+      0.65
+    );
+    pointerRef.current.startX = e.clientX;
+    pointerRef.current.startY = e.clientY;
+  };
+
+  const handlePointerUp = () => {
+    const wasClick = !pointerRef.current.moved;
+    pointerRef.current.isDragging = false;
+    if (wasClick) {
+      handleGhostClick();
+    }
+  };
 
   const handleGhostClick = () => {
     if (!interactive) return;
@@ -400,13 +515,6 @@ export const YuvviCharacter = ({
     setCurrentExpression((prev) => (prev === 'waving' ? 'happy' : 'waving'));
     const randomQuote = YUVVI_QUOTES[Math.floor(Math.random() * YUVVI_QUOTES.length)];
     setSpeech(randomQuote);
-  };
-
-  const handleLanternClick = (e) => {
-    e.stopPropagation();
-    sound.playLanternGlow();
-    setSpeech("The lantern glows when a dream is near! ✨");
-    if (onLanternClick) onLanternClick();
   };
 
   return (
@@ -420,7 +528,7 @@ export const YuvviCharacter = ({
         userSelect: 'none'
       }}
     >
-      {/* Interactive Speech Bubble */}
+      {/* Speech Bubble */}
       {speech && (
         <div
           role="status"
@@ -428,7 +536,7 @@ export const YuvviCharacter = ({
           style={{
             position: 'absolute',
             top: size === 'hero' ? '-45px' : '-32px',
-            background: 'rgba(21, 21, 45, 0.92)',
+            background: 'var(--color-card-bg)',
             color: 'var(--color-text-main)',
             border: '1.5px solid var(--color-lavender)',
             borderRadius: '18px',
@@ -436,7 +544,7 @@ export const YuvviCharacter = ({
             fontSize: '0.92rem',
             fontFamily: 'var(--font-rounded)',
             fontWeight: 600,
-            boxShadow: '0 8px 30px rgba(8, 8, 17, 0.8), 0 0 15px rgba(182, 164, 255, 0.3)',
+            boxShadow: 'var(--shadow-md)',
             whiteSpace: 'nowrap',
             zIndex: 25,
             animation: 'riseIntoSky 0.35s ease-out forwards',
@@ -469,41 +577,61 @@ export const YuvviCharacter = ({
       {webGlSupported ? (
         <div
           ref={mountRef}
-          onClick={handleGhostClick}
+          onPointerDown={interactive ? handlePointerDown : undefined}
+          onPointerMove={interactive ? handlePointerMove : undefined}
+          onPointerUp={interactive ? handlePointerUp : undefined}
+          onPointerCancel={interactive ? handlePointerUp : undefined}
           style={{
             width: `${currentScale.width}px`,
             height: `${currentScale.height}px`,
-            cursor: interactive ? 'pointer' : 'default',
-            filter: 'drop-shadow(0 15px 35px rgba(8, 8, 17, 0.7))',
+            cursor: interactive ? (pointerRef.current?.isDragging ? 'grabbing' : 'grab') : 'default',
+            touchAction: 'none',
+            filter: 'drop-shadow(0 12px 28px rgba(0, 0, 0, 0.45))',
             transition: 'filter 0.3s ease'
           }}
-          title={interactive ? 'Click Yuvvi to interact ✨' : ''}
+          title={interactive ? 'Drag to rotate Yuvvi in 3D, or click to say hello ✨' : ''}
           role="img"
-          aria-label="Yuvvi the little 3D ghost holding a glowing Dream Lantern"
+          aria-label="Interactive 3D Yuvvi the cloud ghost standing on his floating cloud"
         />
       ) : (
-        /* Layered 3D CSS / SVG Fallback */
+        /* Cute Cloud Ghost Fallback */
         <div
           onClick={handleGhostClick}
+          onTouchStart={handleGhostClick}
           style={{
             width: `${currentScale.width}px`,
             height: `${currentScale.height}px`,
             cursor: interactive ? 'pointer' : 'default',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            touchAction: 'manipulation'
           }}
+          title={interactive ? 'Tap Yuvvi to interact ✨' : ''}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') handleGhostClick(); }}
         >
           <svg width={currentScale.width} height={currentScale.height} viewBox="0 0 280 240" fill="none">
+            {/* Companion Cloud Base */}
             <path
-              d="M 120 40 C 85 40, 72 75, 72 120 C 72 165, 80 185, 92 180 C 102 175, 108 185, 118 180 C 126 176, 134 186, 144 180 C 154 175, 160 185, 170 178 C 176 172, 174 150, 174 120 C 174 75, 155 40, 120 40 Z"
+              d="M 60 180 Q 75 160 100 170 Q 130 150 160 165 Q 190 155 210 175 Q 230 195 200 210 Q 160 215 120 210 Q 70 215 60 180 Z"
+              fill="#FFFFFF"
+              stroke="#B6A4FF"
+              strokeWidth="2.5"
+            />
+            {/* Yuvvi Body */}
+            <path
+              d="M 120 50 C 90 50, 80 80, 80 125 C 80 165, 88 175, 98 172 C 108 168, 114 175, 122 172 C 130 168, 138 175, 148 172 C 158 168, 164 175, 172 170 C 178 165, 176 150, 176 125 C 176 80 155 50 120 50 Z"
               fill="#FFFFFF"
               stroke="#B6A4FF"
               strokeWidth="3"
             />
-            <polygon points="120,48 123.5,56 132,56.5 125.5,63.5 127.5,72 120,67 112.5,72 114.5,63.5 108,56.5 116.5,56" fill="#FFD985" />
-            <circle cx="106" cy="100" r="5" fill="#15152D" />
-            <circle cx="142" cy="100" r="5" fill="#15152D" />
+            <polygon points="120,58 123.5,66 132,66.5 125.5,73.5 127.5,82 120,77 112.5,82 114.5,73.5 108,66.5 116.5,66" fill="#FFD985" />
+            <circle cx="106" cy="110" r="5" fill="#15152D" />
+            <circle cx="142" cy="110" r="5" fill="#15152D" />
+            <ellipse cx="96" cy="120" rx="7" ry="4" fill="#D99BCB" opacity="0.6" />
+            <ellipse cx="152" cy="120" rx="7" ry="4" fill="#D99BCB" opacity="0.6" />
           </svg>
         </div>
       )}

@@ -180,29 +180,37 @@ export const LivingFlightOverlay = () => {
           }}
         />
 
-        {/* Miniature Flying Ghost SVG with Lantern held forward */}
-        <svg width="90" height="90" viewBox="0 0 100 100" fill="none">
-          {/* Ghost Body */}
+        {/* Miniature Flying Ghost SVG with Companion Cloud & Lantern held forward */}
+        <svg width="105" height="105" viewBox="0 0 110 110" fill="none">
+          {/* Puffy Floating Cloud Beneath Yuvvi */}
           <path
-            d="M 50 18 C 32 18, 22 36, 22 55 C 22 74, 28 82, 36 78 C 44 74, 48 82, 54 78 C 60 74, 66 82, 74 76 C 80 72, 78 60, 78 55 C 78 36, 68 18, 50 18 Z"
+            d="M 24 82 C 16 82, 10 74, 16 66 C 18 60, 26 58, 32 60 C 38 52, 50 50, 58 56 C 66 50, 78 52, 84 60 C 92 60, 98 68, 94 76 C 92 82, 84 84, 80 82 C 72 86, 62 86, 54 83 C 44 87, 32 86, 24 82 Z"
             fill="#FFFFFF"
             stroke="#B6A4FF"
-            strokeWidth="2.5"
-            filter="drop-shadow(0 6px 12px rgba(8, 8, 17, 0.6))"
+            strokeWidth="2"
+            filter="drop-shadow(0 4px 8px rgba(8, 8, 17, 0.4))"
+          />
+          {/* Ghost Body */}
+          <path
+            d="M 50 14 C 34 14, 25 30, 25 48 C 25 64, 30 72, 38 68 C 44 64, 48 72, 54 68 C 60 64, 66 72, 72 67 C 76 64, 75 52, 75 48 C 75 30, 66 14, 50 14 Z"
+            fill="#FFFFFF"
+            stroke="#B6A4FF"
+            strokeWidth="2.2"
+            filter="drop-shadow(0 4px 10px rgba(8, 8, 17, 0.5))"
           />
           {/* Forehead Star */}
-          <polygon points="50,23 52,28 57,29 53,33 54,38 50,35 46,38 47,33 43,29 48,28" fill="#FFD985" />
+          <polygon points="50,19 51.8,23.5 56.5,24.2 53,27.8 54,32.2 50,29.8 46,32.2 47,27.8 43.5,24.2 48.2,23.5" fill="#FFD985" />
           {/* Eyes (Happy squinting flying eyes) */}
-          <path d="M 40 46 Q 44 40 48 46" stroke="#15152D" strokeWidth="2.5" strokeLinecap="round" fill="none" />
-          <path d="M 54 46 Q 58 40 62 46" stroke="#15152D" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+          <path d="M 41 39 Q 45 33 49 39" stroke="#15152D" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+          <path d="M 53 39 Q 57 33 61 39" stroke="#15152D" strokeWidth="2.4" strokeLinecap="round" fill="none" />
           {/* Cheeks */}
-          <ellipse cx="38" cy="52" rx="4" ry="2.5" fill="#D99BCB" opacity="0.6" />
-          <ellipse cx="64" cy="52" rx="4" ry="2.5" fill="#D99BCB" opacity="0.6" />
+          <ellipse cx="38" cy="45" rx="3.8" ry="2.2" fill="#D99BCB" opacity="0.65" />
+          <ellipse cx="64" cy="45" rx="3.8" ry="2.2" fill="#D99BCB" opacity="0.65" />
           {/* Flying Lantern held forward */}
-          <g transform="translate(68, 48)">
+          <g transform="translate(68, 40)">
             <circle cx="10" cy="12" r="14" fill="rgba(255, 217, 133, 0.4)" />
-            <rect x="5" y="4" width="10" height="15" rx="3" fill="rgba(255, 255, 255, 0.8)" stroke="#D4A137" strokeWidth="1.5" />
-            <circle cx="10" cy="11" r="3" fill="#FFD985" />
+            <rect x="5" y="4" width="10" height="15" rx="3" fill="rgba(255, 255, 255, 0.85)" stroke="#D4A137" strokeWidth="1.5" />
+            <circle cx="10" cy="11" r="3.2" fill="#FFD985" />
           </g>
         </svg>
 

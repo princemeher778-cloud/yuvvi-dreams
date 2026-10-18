@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useStars } from '../context/StarContext';
-import { Volume2, VolumeX, Menu, X, Star, Sparkles } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Volume2, VolumeX, Menu, X, Star, Sparkles, Sun, Moon, Music } from 'lucide-react';
 import { sound } from '../utils/audio';
 
-export const Navbar = () => {
+export const Navbar = ({ onOpenLullaby }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { collected, total, setShowConstellationModal, soundMuted, toggleSound } = useStars();
+  const { isDayMode, toggleTheme } = useTheme();
   const location = useLocation();
 
   const navLinks = [
@@ -28,10 +30,10 @@ export const Navbar = () => {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        backgroundColor: 'rgba(8, 8, 17, 0.82)',
+        backgroundColor: 'var(--color-bg-nav, rgba(8, 8, 17, 0.82))',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(182, 164, 255, 0.14)',
+        borderBottom: '1px solid var(--color-card-border)',
         transition: 'all 0.3s ease'
       }}
     >
@@ -119,7 +121,7 @@ export const Navbar = () => {
                 textTransform: 'uppercase'
               }}
             >
-              The Living Dream World
+              Collector of Forgotten Dreams
             </span>
           </div>
         </Link>
@@ -173,7 +175,34 @@ export const Navbar = () => {
         </nav>
 
         {/* Header Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {/* Day / Night Dream Mode Switch */}
+          <button
+            onClick={toggleTheme}
+            id="day-night-toggle"
+            title={isDayMode ? 'Switch to Starry Night Mode' : 'Switch to Dreamy Day Mode'}
+            aria-label={isDayMode ? 'Switch to Starry Night Mode' : 'Switch to Dreamy Day Mode'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '0.42rem 0.85rem',
+              borderRadius: '999px',
+              border: isDayMode ? '1.5px solid rgba(212, 155, 36, 0.5)' : '1.5px solid var(--color-indigo-border)',
+              backgroundColor: isDayMode ? 'rgba(255, 240, 200, 0.75)' : 'rgba(30, 30, 59, 0.65)',
+              color: isDayMode ? '#B46B05' : 'var(--color-gold)',
+              fontFamily: 'var(--font-rounded)',
+              fontWeight: 600,
+              fontSize: '0.84rem',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease',
+              boxShadow: isDayMode ? '0 0 15px rgba(255, 214, 110, 0.3)' : '0 0 15px rgba(182, 164, 255, 0.15)'
+            }}
+          >
+            {isDayMode ? <Sun size={15} /> : <Moon size={15} />}
+            <span>{isDayMode ? 'Day' : 'Night'}</span>
+          </button>
+
           {/* Forgotten Stars Counter Badge */}
           <button
             onClick={() => {
@@ -208,6 +237,31 @@ export const Navbar = () => {
             <span>Stars: {collected.length}/{total}</span>
             {collected.length === total && <Sparkles size={14} className="animate-twinkle" />}
           </button>
+
+          {/* Lullaby Lab Music Box Button */}
+          {onOpenLullaby && (
+            <button
+              onClick={onOpenLullaby}
+              title="Open Yuvvi's Lullaby Lab"
+              aria-label="Open Yuvvi's Lullaby Lab (Sleepy Music Box)"
+              style={{
+                width: '38px',
+                height: '38px',
+                borderRadius: '50%',
+                border: '1.5px solid var(--color-indigo-border)',
+                backgroundColor: 'rgba(30, 30, 59, 0.65)',
+                color: 'var(--color-gold)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 0 12px rgba(255, 217, 133, 0.2)'
+              }}
+            >
+              <Music size={17} />
+            </button>
+          )}
 
           {/* Sound Toggle */}
           <button
@@ -259,8 +313,8 @@ export const Navbar = () => {
       {mobileMenuOpen && (
         <div
           style={{
-            borderTop: '1px solid rgba(182, 164, 255, 0.15)',
-            backgroundColor: 'rgba(13, 13, 30, 0.95)',
+            borderTop: '1px solid var(--color-card-border)',
+            backgroundColor: 'var(--color-mobile-drawer, rgba(13, 13, 30, 0.95))',
             padding: '1.25rem 1.5rem',
             display: 'flex',
             flexDirection: 'column',

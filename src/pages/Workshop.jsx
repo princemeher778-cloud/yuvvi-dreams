@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CollectibleStar } from '../components/CollectibleStar';
 import { YuvviCharacter } from '../components/YuvviCharacter';
+import { DreamCatcherGame } from '../components/DreamCatcherGame';
 import {
   Compass,
   Sparkles,
@@ -680,6 +681,26 @@ export const Workshop = () => {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* =========================================================================
+            INVENTION 3: THE DREAM CATCHER TEST BENCH (MINI-GAME)
+            ========================================================================= */}
+        <section style={{ marginBottom: '4.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+            <div className="badge badge-berry" style={{ marginBottom: '0.6rem' }}>
+              <Sparkles size={14} />
+              <span>Interactive Workshop Test Bench</span>
+            </div>
+            <h3 style={{ fontSize: '1.9rem', color: 'var(--color-moon-blue)', margin: '0 0 0.5rem', fontFamily: 'var(--font-rounded)' }}>
+              Test Bench: Yuvvi’s Dream Catcher
+            </h3>
+            <p style={{ color: 'var(--color-text-sub)', fontSize: '1rem', maxWidth: '580px', margin: '0 auto' }}>
+              Test the agility of Yuvvi's floating companion cloud by catching daydreams and falling starlight before the night is over!
+            </p>
+          </div>
+
+          <DreamCatcherGame />
         </section>
 
         {/* Bottom Destination Buttons */}

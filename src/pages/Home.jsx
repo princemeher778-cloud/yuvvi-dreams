@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { YuvviCharacter } from '../components/YuvviCharacter';
 import { DreamDestinationHeading } from '../components/DreamDestinationHeading';
 import { CollectibleStar } from '../components/CollectibleStar';
+import { DreamDeliveryMap } from '../components/DreamDeliveryMap';
+import { ScrollStoryJourney } from '../components/ScrollStoryJourney';
+import { DreamGuestbook } from '../components/DreamGuestbook';
 import { useFlight } from '../context/FlightContext';
 import {
   Sparkles,
@@ -14,11 +17,12 @@ import {
   Heart,
   Feather,
   Stars,
-  Moon
+  Moon,
+  Music
 } from 'lucide-react';
 import { sound } from '../utils/audio';
 
-export const Home = () => {
+export const Home = ({ onOpenLullaby }) => {
   const navigate = useNavigate();
   const introRef = useRef(null);
   const heroCharacterRef = useRef(null);
@@ -100,8 +104,8 @@ export const Home = () => {
                   gap: '8px',
                   padding: '0.45rem 1.15rem',
                   borderRadius: '999px',
-                  backgroundColor: 'rgba(30, 30, 59, 0.75)',
-                  border: '1px solid rgba(182, 164, 255, 0.3)',
+                  backgroundColor: 'var(--color-card-bg)',
+                  border: '1px solid var(--color-card-border)',
                   marginBottom: '1.4rem',
                   boxShadow: '0 0 20px rgba(182, 164, 255, 0.18)'
                 }}
@@ -115,7 +119,7 @@ export const Home = () => {
                     color: 'var(--color-gold)'
                   }}
                 >
-                  Yuvvi — The Little Collector of Forgotten Dreams
+                  Baby's First Website Hackathon • Welcome to Yuvvi's Dreamworld ✨
                 </span>
               </div>
 
@@ -127,7 +131,7 @@ export const Home = () => {
                   marginBottom: '1.35rem'
                 }}
               >
-                Somewhere, a <span style={{ color: 'var(--color-moon-blue)' }}>Forgotten Dream</span> Is Waiting for You.
+                Meet Yuvvi, the Little Cloud Ghost Who Collects <span style={{ color: 'var(--color-moon-blue)' }}>Forgotten Dreams</span>.
               </h1>
 
               <p
@@ -275,6 +279,9 @@ export const Home = () => {
             </p>
           </div>
 
+          {/* Animated Dream Delivery Map Route */}
+          <DreamDeliveryMap />
+
           {/* 4 Embedded Destinations Grid */}
           <div
             style={{
@@ -341,6 +348,9 @@ export const Home = () => {
           </div>
         </div>
       </section>
+
+      {/* 2.5 SCROLL-DRIVEN NARRATIVE JOURNEY */}
+      <ScrollStoryJourney />
 
       {/* 3. CHARACTER INTRODUCTION SECTION */}
       <section
@@ -453,15 +463,34 @@ export const Home = () => {
                 </div>
               </div>
 
-              <button
-                className="btn btn-primary"
-                onClick={handleMeetYuvvi}
-              >
-                <span>Read Yuvvi's Full Story</span>
-                <ArrowRight size={18} />
-              </button>
+              <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleMeetYuvvi}
+                >
+                  <span>Read Yuvvi's Full Story</span>
+                  <ArrowRight size={18} />
+                </button>
+
+                {onOpenLullaby && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={onOpenLullaby}
+                  >
+                    <Music size={16} color="var(--color-gold)" />
+                    <span>Open Lullaby Lab</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 4. LIVE DREAM GUESTBOOK SECTION */}
+      <section style={{ paddingTop: '3rem', paddingBottom: '5rem' }}>
+        <div className="container">
+          <DreamGuestbook />
         </div>
       </section>
     </div>

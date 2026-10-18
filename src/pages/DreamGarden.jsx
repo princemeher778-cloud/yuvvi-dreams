@@ -4,6 +4,7 @@ import { CollectibleStar } from '../components/CollectibleStar';
 import { YuvviCharacter } from '../components/YuvviCharacter';
 import { Flower2, Sparkles, ArrowLeft, BookOpen, Star, AlertCircle, Trash2, CheckCircle2 } from 'lucide-react';
 import { sound } from '../utils/audio';
+import { supabase, isSupabaseConfigured } from '../lib/supabase';
 
 const INITIAL_WISHES = [
   {
@@ -46,6 +47,8 @@ export const DreamGarden = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [confirmationMessage, setConfirmationMessage] = useState('');
   const [justPlantedStar, setJustPlantedStar] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dbStatus, setDbStatus] = useState('local'); // 'connected' | 'offline' | 'local'
 
   const [wishes, setWishes] = useState(() => {
     try {
@@ -56,6 +59,7 @@ export const DreamGarden = () => {
     }
   });
 
+  // Keep local storage synchronized as an offline resilience layer
   useEffect(() => {
     try {
       localStorage.setItem('yuvvi_garden_wishes', JSON.stringify(wishes));
@@ -64,7 +68,58 @@ export const DreamGarden = () => {
     }
   }, [wishes]);
 
-  const handlePlantWish = (e) => {
+  // Fetch approved wishes from Supabase if configured; fall back gracefully to local storage
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadWishes() {
+      if (!isSupabaseConfigured() || !supabase) {
+        if (isMounted) setDbStatus('local');
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('dream_wishes')
+          .select('*')
+          .eq('is_approved', true)
+          .order('created_at', { ascending: false })
+          .limit(40);
+
+        if (error) {
+          console.warn('Supabase query error, fallback to local storage:', error.message);
+          if (isMounted) setDbStatus('offline');
+        } else if (data && data.length > 0) {
+          if (isMounted) {
+            const mapped = data.map((item) => ({
+              id: item.id,
+              text: item.text,
+              color: item.color || item.hue || '#FFD985',
+              x: Number(item.x) || 50,
+              y: Number(item.y) || 30,
+              date: item.created_at ? new Date(item.created_at).toLocaleDateString() : 'Starlight'
+            }));
+            setWishes(mapped);
+            setDbStatus('connected');
+          }
+        } else {
+          // Connected, table exists
+          if (isMounted) setDbStatus('connected');
+        }
+      } catch (err) {
+        console.warn('Network issue reaching Supabase, using local wishes:', err);
+        if (isMounted) setDbStatus('offline');
+      }
+    }
+
+    loadWishes();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handlePlantWish = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setConfirmationMessage('');
@@ -84,20 +139,61 @@ export const DreamGarden = () => {
 
     // Play rising harp cascade and lantern glow
     sound.playWishPlanted();
+    setIsSubmitting(true);
+
+    const xPos = Math.floor(Math.random() * 70) + 15;
+    const yPos = Math.floor(Math.random() * 45) + 15;
 
     const newStar = {
       id: `wish-${Date.now()}`,
       text: trimmed,
       color: selectedColor,
       date: 'Planted just now',
-      x: Math.floor(Math.random() * 70) + 15,
-      y: Math.floor(Math.random() * 45) + 15
+      x: xPos,
+      y: yPos
     };
 
     setJustPlantedStar(newStar);
     setWishes((prev) => [newStar, ...prev]);
     setWishInput('');
-    setConfirmationMessage('Your dream has found a little place in the sky. ✨');
+
+    // Attempt Supabase insert if configured
+    if (isSupabaseConfigured() && supabase) {
+      try {
+        const { error } = await supabase
+          .from('dream_wishes')
+          .insert([
+            {
+              text: trimmed,
+              color: selectedColor,
+              x: xPos,
+              y: yPos,
+              is_approved: false
+            }
+          ]);
+
+        if (error) {
+          console.warn('Supabase insert error, reverting star:', error.message);
+          setDbStatus('offline');
+          setJustPlantedStar(null);
+          setWishes((prev) => prev.filter((w) => w.id !== newStar.id));
+          setErrorMessage(`Database submission could not be completed: ${error.message}`);
+        } else {
+          setDbStatus('connected');
+          setConfirmationMessage('Your dream has been safely sent to Yuvvi’s sky! (Awaiting starlight blessing) ✨');
+        }
+      } catch (err) {
+        console.warn('Network issue during insert:', err);
+        setDbStatus('offline');
+        setJustPlantedStar(null);
+        setWishes((prev) => prev.filter((w) => w.id !== newStar.id));
+        setErrorMessage('Network connection error: could not reach the cloud database. Please try again.');
+      }
+    } else {
+      setConfirmationMessage('Your dream has found a little place in local star memory. ✨');
+    }
+
+    setIsSubmitting(false);
 
     setTimeout(() => {
       setJustPlantedStar(null);
@@ -150,9 +246,59 @@ export const DreamGarden = () => {
 
         {/* Hero Title & Atmosphere */}
         <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3.5rem' }}>
-          <div className="badge badge-moon" style={{ marginBottom: '0.85rem' }}>
-            <Flower2 size={15} />
-            <span>Sacred Sanctuary of Wishes</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.65rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
+            <div className="badge badge-moon">
+              <Flower2 size={15} />
+              <span>Sacred Sanctuary of Wishes</span>
+            </div>
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.3rem 0.75rem',
+                borderRadius: '999px',
+                fontSize: '0.78rem',
+                fontFamily: 'var(--font-rounded)',
+                backgroundColor:
+                  dbStatus === 'connected'
+                    ? 'rgba(85, 239, 196, 0.12)'
+                    : dbStatus === 'offline'
+                    ? 'rgba(255, 118, 117, 0.12)'
+                    : 'rgba(255, 217, 133, 0.12)',
+                border:
+                  dbStatus === 'connected'
+                    ? '1px solid rgba(85, 239, 196, 0.35)'
+                    : dbStatus === 'offline'
+                    ? '1px solid rgba(255, 118, 117, 0.35)'
+                    : '1px solid rgba(255, 217, 133, 0.35)',
+                color:
+                  dbStatus === 'connected'
+                    ? '#55efc4'
+                    : dbStatus === 'offline'
+                    ? '#ff7675'
+                    : '#FFD985'
+              }}
+            >
+              <span
+                style={{
+                  width: '7px',
+                  height: '7px',
+                  borderRadius: '50%',
+                  backgroundColor:
+                    dbStatus === 'connected' ? '#55efc4' : dbStatus === 'offline' ? '#ff7675' : '#FFD985',
+                  boxShadow:
+                    dbStatus === 'connected' ? '0 0 8px #55efc4' : 'none'
+                }}
+              />
+              <span>
+                {dbStatus === 'connected'
+                  ? 'Supabase Cloud Connected'
+                  : dbStatus === 'offline'
+                  ? 'Offline (Local Fallback)'
+                  : 'Local Storage Memory'}
+              </span>
+            </div>
           </div>
           <h1 style={{ fontSize: 'clamp(2.3rem, 4.5vw, 3.4rem)', marginBottom: '1rem' }}>
             Your Dream Garden
@@ -262,6 +408,23 @@ export const DreamGarden = () => {
                 </span>
               </div>
             ))}
+            {wishes.length === 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  color: 'var(--color-lavender)',
+                  fontFamily: 'var(--font-rounded)',
+                  fontSize: '0.92rem',
+                  opacity: 0.8
+                }}
+              >
+                The sky is quiet and peaceful. Whisper a wish below to plant the first star! ✨
+              </div>
+            )}
 
             {/* Rising Star Animation for Just Planted Wish */}
             {justPlantedStar && (
@@ -521,10 +684,11 @@ export const DreamGarden = () => {
                 <button
                   type="submit"
                   className="btn btn-gold"
-                  style={{ fontSize: '1.08rem', padding: '0.95rem 2.6rem' }}
+                  disabled={isSubmitting}
+                  style={{ fontSize: '1.08rem', padding: '0.95rem 2.6rem', opacity: isSubmitting ? 0.7 : 1 }}
                 >
                   <Sparkles size={18} />
-                  <span>Plant My Star</span>
+                  <span>{isSubmitting ? 'Weaving Starlight...' : 'Plant My Star'}</span>
                 </button>
               </div>
 
@@ -536,7 +700,9 @@ export const DreamGarden = () => {
                   marginTop: '1.25rem'
                 }}
               >
-                Note: In this prototype, your planted wishes are preserved in your browser's local memory.
+                {dbStatus === 'connected'
+                  ? '✨ Connected to Supabase: Your planted stars are stored in the cloud PostgreSQL database.'
+                  : '✨ Graceful offline & local storage fallback active. (Connect your Supabase project in .env anytime)'}
               </p>
             </form>
           </div>

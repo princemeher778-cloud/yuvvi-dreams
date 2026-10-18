@@ -2,8 +2,17 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CollectibleStar } from '../components/CollectibleStar';
 import { YuvviCharacter } from '../components/YuvviCharacter';
-import { Sparkles, ArrowRight, ArrowLeft, BookOpen, Flower2 } from 'lucide-react';
+import { StoryBook } from '../components/StoryBook';
+import { Sparkles, ArrowRight, ArrowLeft, BookOpen, Flower2, ScrollText, BookMarked } from 'lucide-react';
 import { sound } from '../utils/audio';
+
+import chapter1Img from '../assets/chapter1.jpg';
+import chapter2Img from '../assets/chapter2.jpg';
+import chapter3Img from '../assets/chapter3.jpg';
+import chapter4Img from '../assets/chapter4.jpg';
+import chapter5Img from '../assets/chapter5.jpg';
+
+const CHAPTER_IMAGES = [chapter1Img, chapter2Img, chapter3Img, chapter4Img, chapter5Img];
 
 const CHAPTERS = [
   {
@@ -85,6 +94,7 @@ const CHAPTERS = [
 
 export const Story = () => {
   const navigate = useNavigate();
+  const [mode, setMode] = useState('storybook'); // 'storybook' | 'scroll'
   const [activeChapterIndex, setActiveChapterIndex] = useState(0);
 
   const scrollToChapter = (index) => {
@@ -136,50 +146,88 @@ export const Story = () => {
         </div>
 
         {/* Story Header */}
-        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 3rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '780px', margin: '0 auto 2.5rem' }}>
           <div className="badge badge-berry" style={{ marginBottom: '0.85rem' }}>
             <BookOpen size={15} />
-            <span>The Illustrated Chronicle</span>
+            <span>The Illustrated Storybook</span>
           </div>
           <h1 style={{ fontSize: 'clamp(2.4rem, 4.5vw, 3.5rem)', marginBottom: '1rem' }}>
             Yuvvi’s Story
           </h1>
           <p style={{ fontSize: '1.16rem', color: 'var(--color-text-sub)', lineHeight: 1.68 }}>
-            Five cinematic illustrated chapters following the journey of a tiny ghost who learned that forgotten dreams
+            Five illustrated anime chapters following the journey of a tiny ghost who learned that forgotten dreams
             become constellations when they are shared.
           </p>
 
-          {/* Chapter Quick Jump Buttons */}
+          {/* Mode Switcher: Interactive Storybook vs Scroll Chronicle */}
           <div
             style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: '0.6rem',
-              marginTop: '1.6rem'
+              display: 'inline-flex',
+              padding: '4px',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(30, 30, 59, 0.7)',
+              border: '1px solid var(--color-indigo-border)',
+              marginTop: '1.4rem'
             }}
           >
-            {CHAPTERS.map((ch, idx) => (
-              <button
-                key={ch.number}
-                onClick={() => scrollToChapter(idx)}
-                className="btn"
-                style={{
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.88rem',
-                  backgroundColor: activeChapterIndex === idx ? 'var(--color-purple)' : 'rgba(30, 30, 59, 0.7)',
-                  color: activeChapterIndex === idx ? '#FFFFFF' : 'var(--color-text-sub)',
-                  border: activeChapterIndex === idx ? '1px solid var(--color-lavender)' : '1px solid var(--color-indigo-border)'
-                }}
-              >
-                <span>{ch.number}</span>
-              </button>
-            ))}
+            <button
+              onClick={() => {
+                sound.playChime(659.25, 'sine', 0.25);
+                setMode('storybook');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.45rem 1.25rem',
+                borderRadius: '999px',
+                border: 'none',
+                backgroundColor: mode === 'storybook' ? 'var(--color-gold)' : 'transparent',
+                color: mode === 'storybook' ? '#15152D' : 'var(--color-text-sub)',
+                fontWeight: mode === 'storybook' ? 700 : 500,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-rounded)',
+                fontSize: '0.88rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <BookMarked size={16} />
+              <span>Interactive Storybook</span>
+            </button>
+
+            <button
+              onClick={() => {
+                sound.playChime(587.33, 'sine', 0.25);
+                setMode('scroll');
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0.45rem 1.25rem',
+                borderRadius: '999px',
+                border: 'none',
+                backgroundColor: mode === 'scroll' ? 'var(--color-purple)' : 'transparent',
+                color: mode === 'scroll' ? '#FFFFFF' : 'var(--color-text-sub)',
+                fontWeight: mode === 'scroll' ? 700 : 500,
+                cursor: 'pointer',
+                fontFamily: 'var(--font-rounded)',
+                fontSize: '0.88rem',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <ScrollText size={16} />
+              <span>Scroll Chronicle</span>
+            </button>
           </div>
         </div>
 
-        {/* 5 CHAPTERS SCROLLING STORYBOOK */}
-        <div style={{ maxWidth: '840px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '3.8rem' }}>
+        {/* INTERACTIVE STORYBOOK MODE */}
+        {mode === 'storybook' ? (
+          <StoryBook chapters={CHAPTERS} chapterImages={CHAPTER_IMAGES} />
+        ) : (
+          /* CLASSIC SCROLLING CHRONICLE MODE */
+          <div style={{ maxWidth: '840px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '3.8rem' }}>
           {CHAPTERS.map((chapter, idx) => {
             return (
               <article
@@ -223,94 +271,43 @@ export const Story = () => {
                   {chapter.title}
                 </h2>
 
-                {/* Illustrated Cinematic Scene Graphic */}
+                {/* Genuine Anime Chapter Illustration */}
                 <div
                   style={{
-                    borderRadius: '16px',
-                    height: '200px',
-                    backgroundColor: '#090916',
+                    borderRadius: '18px',
                     position: 'relative',
                     overflow: 'hidden',
-                    marginBottom: '1.85rem',
+                    marginBottom: '2rem',
+                    boxShadow: 'var(--shadow-md)',
+                    border: '1.5px solid var(--color-card-border)',
+                    backgroundColor: 'rgba(15, 15, 30, 0.6)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '1px solid rgba(182, 164, 255, 0.2)'
+                    maxHeight: '440px'
                   }}
                 >
-                  {/* Scene 1: Birth from Fallen Star */}
-                  {idx === 0 && (
-                    <svg viewBox="0 0 500 180" style={{ width: '100%', height: '100%' }}>
-                      <circle cx="250" cy="90" r="48" fill="rgba(255, 217, 133, 0.3)" className="animate-pulse-glow" />
-                      <polygon
-                        points="250,55 258,78 282,78 262,94 270,118 250,102 230,118 238,94 218,78 242,78"
-                        fill="#FFD985"
-                      />
-                      <circle cx="250" cy="85" r="5" fill="#FFFFFF" />
-                      <path
-                        d="M 235 85 C 235 60 265 60 265 85 C 265 105 258 108 250 105 C 242 108 235 105 235 85 Z"
-                        fill="rgba(255, 255, 255, 0.85)"
-                        className="animate-float"
-                      />
-                    </svg>
-                  )}
-
-                  {/* Scene 2: Dream Collector with Lantern */}
-                  {idx === 1 && (
-                    <svg viewBox="0 0 500 180" style={{ width: '100%', height: '100%' }}>
-                      <path d="M 60 140 Q 120 100 200 120 T 360 110 T 480 130" stroke="#6D55A8" strokeWidth="2" fill="none" />
-                      <g transform="translate(250, 80)">
-                        <circle cx="0" cy="0" r="42" fill="rgba(255, 217, 133, 0.45)" className="animate-pulse-glow" />
-                        <rect x="-15" y="-20" width="30" height="40" rx="6" fill="rgba(255, 255, 255, 0.7)" stroke="#FFD985" strokeWidth="2" />
-                        <circle cx="0" cy="0" r="6" fill="#FFD985" />
-                      </g>
-                      <circle cx="150" cy="60" r="14" fill="rgba(217, 155, 203, 0.35)" className="animate-float" />
-                      <circle cx="340" cy="70" r="18" fill="rgba(168, 217, 255, 0.35)" className="animate-float" />
-                    </svg>
-                  )}
-
-                  {/* Scene 3: Castle Workshop */}
-                  {idx === 2 && (
-                    <svg viewBox="0 0 500 180" style={{ width: '100%', height: '100%' }}>
-                      <rect x="210" y="70" width="80" height="90" fill="#1E1E3B" />
-                      <polygon points="210,70 250,30 290,70" fill="#28224C" />
-                      <rect x="235" y="95" width="30" height="40" rx="15" fill="#FFD985" opacity="0.85" />
-                      <circle cx="160" cy="80" r="16" stroke="#FFD985" strokeWidth="2" strokeDasharray="3 3" fill="none" />
-                      <circle cx="330" cy="90" r="20" stroke="#FFD985" strokeWidth="2" strokeDasharray="4 4" fill="none" />
-                    </svg>
-                  )}
-
-                  {/* Scene 4: Starlight Memory Sky (with hidden star!) */}
-                  {idx === 3 && (
-                    <svg viewBox="0 0 500 180" style={{ width: '100%', height: '100%' }}>
-                      <circle cx="120" cy="40" r="1.5" fill="#FFF" className="animate-twinkle" />
-                      <circle cx="250" cy="30" r="2.5" fill="#FFD985" className="animate-twinkle" />
-                      <circle cx="380" cy="50" r="1.5" fill="#FFF" className="animate-twinkle" />
-                      <circle cx="180" cy="110" r="2" fill="#A8D9FF" className="animate-twinkle" />
-                      <circle cx="320" cy="120" r="1.8" fill="#FFF" className="animate-twinkle" />
-                      <g transform="translate(250, 110)">
-                        <circle cx="0" cy="0" r="28" fill="rgba(255, 255, 255, 0.9)" />
-                        <polygon points="0,-22 4,-10 16,-10 7,-2 11,10 0,2 -11,10 -7,-2 -16,-10 -4,-10" fill="#FFD985" />
-                      </g>
-                    </svg>
-                  )}
-
-                  {/* Scene 5: Yuvvi reaches out with starlight */}
-                  {idx === 4 && (
-                    <svg viewBox="0 0 500 180" style={{ width: '100%', height: '100%' }}>
-                      <g transform="translate(250, 80)">
-                        <circle cx="0" cy="0" r="48" fill="rgba(255, 217, 133, 0.35)" className="animate-pulse-glow" />
-                        <circle cx="0" cy="0" r="28" fill="#FFFFFF" stroke="#B6A4FF" strokeWidth="3" />
-                        <polygon points="0,-16 3,-5 12,-5 5,1 8,11 0,5 -8,11 -5,1 -12,-5 -3,-5" fill="#FFD985" />
-                        <ellipse cx="-8" cy="-2" rx="2.5" ry="3.5" fill="#15152D" />
-                        <ellipse cx="8" cy="-2" rx="2.5" ry="3.5" fill="#15152D" />
-                        <path d="M -5 6 Q 0 10 5 6" stroke="#15152D" strokeWidth="1.8" fill="none" />
-                      </g>
-                      <text x="250" y="150" textAnchor="middle" fill="#FFD985" fontFamily="var(--font-rounded)" fontSize="13">
-                        "Your turn to shine. ✨"
-                      </text>
-                    </svg>
-                  )}
+                  <img
+                    src={CHAPTER_IMAGES[idx]}
+                    alt={`Illustration for ${chapter.number}: ${chapter.title}`}
+                    loading="lazy"
+                    style={{
+                      width: '100%',
+                      height: 'auto',
+                      maxHeight: '440px',
+                      objectFit: 'cover',
+                      display: 'block'
+                    }}
+                  />
+                  {/* Gentle gradient vignette overlay */}
+                  <div
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      background: 'linear-gradient(180deg, rgba(8, 8, 17, 0.08) 0%, rgba(8, 8, 17, 0.25) 100%)',
+                      pointerEvents: 'none'
+                    }}
+                  />
                 </div>
 
                 {/* Narrative Text */}
@@ -328,7 +325,8 @@ export const Story = () => {
               </article>
             );
           })}
-        </div>
+          </div>
+        )}
 
         {/* EMOTIONAL FINAL SCENE & CTA */}
         <div

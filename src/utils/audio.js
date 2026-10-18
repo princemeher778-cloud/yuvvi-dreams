@@ -209,6 +209,128 @@ class SoundEffects {
       // Fallback
     }
   }
+
+  // --- LULLABY LAB ENGINE (Gentle Music Box Sequencer) ---
+  initLullabyEngine() {
+    if (!this.lullabyState) {
+      this.lullabyState = {
+        isPlaying: false,
+        timer: null,
+        currentTrack: 'starlight',
+        step: 0,
+        volume: 0.18,
+        onNote: null
+      };
+    }
+  }
+
+  // Play a single music box chime tine
+  playMusicBoxNote(freq, duration = 1.6) {
+    if (this.muted) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+
+      const osc = this.ctx.createOscillator();
+      const oscHarmonic = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      // Pure music box sine fundamental + subtle bell chime harmonic
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+      oscHarmonic.type = 'triangle';
+      oscHarmonic.frequency.setValueAtTime(freq * 2.01, this.ctx.currentTime);
+
+      const vol = (this.lullabyState?.volume || 0.18);
+      gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(vol, this.ctx.currentTime + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+      osc.connect(gain);
+      oscHarmonic.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      oscHarmonic.start();
+      osc.stop(this.ctx.currentTime + duration);
+      oscHarmonic.stop(this.ctx.currentTime + duration);
+    } catch {
+      // Guarded
+    }
+  }
+
+  startLullaby(trackId = 'starlight', onNoteCallback = null) {
+    this.init();
+    this.initLullabyEngine();
+    this.stopLullaby();
+
+    this.lullabyState.isPlaying = true;
+    this.lullabyState.currentTrack = trackId;
+    this.lullabyState.step = 0;
+    this.lullabyState.onNote = onNoteCallback;
+
+    // Lullaby Melodic Patterns (Music-box frequencies in Hz)
+    const TRACKS = {
+      starlight: [
+        523.25, 659.25, 783.99, 1046.50, 783.99, 659.25,
+        587.33, 739.99, 880.00, 1174.66, 880.00, 739.99,
+        659.25, 783.99, 987.77, 1318.51, 987.77, 783.99,
+        523.25, 659.25, 783.99, 1046.50, 1318.51, 1046.50
+      ],
+      cloudCradle: [
+        659.25, 659.25, 783.99, 659.25, 523.25, 587.33,
+        659.25, 523.25, 440.00, 392.00, 440.00, 523.25,
+        587.33, 659.25, 783.99, 880.00, 783.99, 659.25,
+        523.25, 440.00, 392.00, 523.25, 659.25, 523.25
+      ],
+      midnightMoon: [
+        440.00, 554.37, 659.25, 830.61, 880.00, 659.25,
+        493.88, 587.33, 739.99, 987.77, 739.99, 587.33,
+        523.25, 659.25, 783.99, 1046.50, 783.99, 659.25,
+        440.00, 554.37, 659.25, 880.00, 1108.73, 880.00
+      ]
+    };
+
+    const notes = TRACKS[trackId] || TRACKS.starlight;
+    const intervalMs = 620; // gentle, relaxing tempo
+
+    const tick = () => {
+      if (!this.lullabyState?.isPlaying) return;
+
+      const noteFreq = notes[this.lullabyState.step % notes.length];
+      this.playMusicBoxNote(noteFreq, 1.8);
+
+      if (this.lullabyState.onNote) {
+        this.lullabyState.onNote(this.lullabyState.step % notes.length, noteFreq);
+      }
+
+      this.lullabyState.step++;
+      this.lullabyState.timer = setTimeout(tick, intervalMs);
+    };
+
+    tick();
+  }
+
+  stopLullaby() {
+    if (this.lullabyState) {
+      this.lullabyState.isPlaying = false;
+      if (this.lullabyState.timer) {
+        clearTimeout(this.lullabyState.timer);
+        this.lullabyState.timer = null;
+      }
+    }
+  }
+
+  isLullabyPlaying() {
+    return !!this.lullabyState?.isPlaying;
+  }
+
+  setLullabyVolume(vol) {
+    if (this.lullabyState) {
+      this.lullabyState.volume = Math.max(0, Math.min(1, vol));
+    }
+  }
 }
 
 export const sound = new SoundEffects();

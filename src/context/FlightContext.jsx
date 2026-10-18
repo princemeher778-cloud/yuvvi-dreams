@@ -59,7 +59,7 @@ export const FlightProvider = ({ children }) => {
       sound.playFlightWhoosh();
 
       const startTime = performance.now();
-      const flightDuration = 850; // ms for smooth, cinematic curved transit
+      const flightDuration = 1400; // ms for comfortable, medium-speed guided journey
 
       const animateFlight = (time) => {
         const elapsed = time - startTime;
